@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container py-5">
+        <h2>Welcome to Your Dashboard, {{ current_user.first_name }}!</h2>
+
+        <h3>My Shortened URLs</h3>
+        
+        {% if short_url %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Original URL</th>
+                        <th>Shortened URL</th>
+                        <th>Analytics</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for url in short_url %}
+                        <tr>
+                            <td>{{ url.original_url }}</td>
+                            <td>{{ url.short_url }}</td>
+                            <td>
+                                <form method="post" action="{{ url_for('analytics') }}">
+                                    <input type="hidden" name="short_url" value="{{ url.short_url }}">
+                                    <button type="submit" class="btn btn-primary">View Analytics</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No shortened URLs available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Placeholder for analytics report -->
+    <div class="analytics-report">
+        {% if plot %}
+            {{ plot|safe }}
+        {% else %}
+            <p>No analytics data available.</p>
+        {% endif %}
+    </div>
+{% endblock %}
