@@ -15,17 +15,17 @@
     </head>
     <body>
         <!-- Responsive navbar-->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
             <div class="container px-5">
-                <a class="navbar-brand" href="{{url_for('index')}}"><i>LASER</i></a>
+                <a class="navbar-brand" href="{{url_for('index')}}"><img class="img-responsive" src="{{url_for('static', filename='images/lazer logo color.png')}}" alt="Lazer logo" style="height: 100px; width: 200px;"></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                         {% if current_user.is_authenticated %}
                             <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Home</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{url_for('about')}}">About</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{url_for('dashboard')}}">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{url_for('contact')}}">Contact</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{url_for('analytics')}}">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}">Logout</a></li>
                         {% else%}
                             <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Home</a></li>
@@ -43,7 +43,7 @@
 
         {% endblock content %}
         <!-- Footer-->
-        <footer class="py-5 bg-primary">
+        <footer class="py-5 bg-secondary">
             <div class="container px-4 px-lg-5"><p class="m-0 text-center text-white">Copyright &copy; Bsmart Technologies 2023 | #SOT, All Rights Reserved</p></div>
         </footer>
         <!-- Bootstrap core JS-->

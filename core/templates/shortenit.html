@@ -4,14 +4,26 @@
         <div class="container px-4 px-lg-5">
             <!-- Heading Row-->
             <div class="row gx-4 gx-lg-5 align-items-center my-5">
-                <div class="col-lg-6"><img class="img-fluid rounded mb-4 mb-lg-0" src="{{url_for('static', filename='images/Snip.jpg')}}" alt="..." /></div>
+                <div class="col-lg-6"><img class="img-fluid rounded mb-4 mb-lg-0" src="{{url_for('static', filename='images/Snip.png')}}" alt="..." /></div>
                 <div class="col-lg-6">
-                    <h1 class="font-weight-light">Please Shorten Your URL</h1>
+                    <h1 class="font-weight-light text-white">Please Shorten Your URL</h1>
+
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    {% for message in messages %}
+                                        <li>{{ message }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
                     <form method="post" action="{{url_for('shorten')}}">
                         <div class="form-floating mb-3">
-                            <input class="form-control" name="url" id="url" type="text" value="{{ request.form['url' ]}}" 
+                            <input class="form-control" name="url" id="url" type="text" value="{{ request.form.get('url', '') }}" 
                             placeholder="Enter Loooooooong URL" />
-                            <label for="url">Original URL</label>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -22,7 +34,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-primary" type="submit">Shorten</button>
+                        <button class="btn btn-secondary" type="submit">Shorten</button>
                     </form>
                     <!-- <p>This is a template that is great for small businesses. It doesn't have too much fancy flare to it, but it makes a great use of the standard Bootstrap core components. Feel free to use this template for any project you want!</p> -->
                 </div>
@@ -41,7 +53,7 @@
                             <h2 class="card-title">Website Development</h2>
                             <p class="card-text">We specialize in creating responsive and visually appealing websites that meet your business needs.</p>
                         </div>
-                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">More Info</a></div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-5">
@@ -50,7 +62,7 @@
                             <h2 class="card-title">Software Development</h2>
                             <p class="card-text">We offer custom software development services to help you build scalable and efficient solutions.</p>
                         </div>
-                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">More Info</a></div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-5">
@@ -59,7 +71,7 @@
                             <h2 class="card-title">Website Management</h2>
                             <p class="card-text">We provide comprehensive website management services, ensuring your website runs smoothly and stays up-to-date.</p>
                         </div>
-                        <div class="card-footer"><a class="btn btn-primary btn-sm" href="#!">More Info</a></div>
+                        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">More Info</a></div>
                     </div>
                 </div>
             </div>

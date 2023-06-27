@@ -1,24 +1,25 @@
 from datetime import datetime
-from core.models import ShortUrls, User, Contact, UrlAnalytics
+from core.models import ShortUrls, User, Contact, Click
 from core import app, db
 from random import choice
 import string
-from flask import render_template, request, flash, redirect, url_for, send_file, abort
+from flask import render_template, request, flash, redirect, url_for, send_file, abort, session
 import base64
 import qrcode
 from io import BytesIO
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import re
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import sqlite3
 import psycopg2
 from psycopg2 import sql
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from core import limiter
-
-
+from core import cache
+from flask_caching import Cache
+import phonenumbers
 
 
 # Flask-Login configuration
@@ -27,75 +28,6 @@ login_manager.login_view = 'login'
 
 
 DB_NAME = 'Linksnip'
-
-# Log analytics data for a shortened URL
-def log_analytics(short_url, ip_address, user_agent, referral_source):
-    analytics = UrlAnalytics(shortened_url=short_url, ip_address=ip_address,
-                             user_agent=user_agent, referral_source=referral_source)
-    db.session.add(analytics)
-    db.session.commit()
-
-# Retrieve analytics data for a shortened URL
-def get_analytics(short_url):
-    conn = psycopg2.connect(
-        host='localhost',
-        port=5432,
-        dbname='Linksnip.db'
-    )
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT ua.timestamp, ua.ip_address, ua.user_agent, ua.referral_source, c.location, c.created_at
-        FROM urlanalytics AS ua
-        INNER JOIN shorturls AS su ON ua.shortened_url = su.short_id
-        LEFT JOIN clicks AS c ON su.id = c.shorturl_id
-        WHERE ua.shortened_url = %s
-    ''', (short_url,))
-    data = cursor.fetchall()
-    conn.close()
-    return data
-
-
-# Generate analytics report using Plotly
-def generate_analytics_report(data):
-    timestamps = [row[0] for row in data]
-    ip_addresses = [row[1] for row in data]
-    user_agents = [row[2] for row in data]
-    referral_sources = [row[3] for row in data]
-    click_locations = [row[4] for row in data]
-    click_timestamps = [row[5] for row in data]
-
-    fig = make_subplots(rows=2, cols=2, subplot_titles=("IP Addresses", "User Agents", "Referral Sources", "Clicks"))
-
-    fig.add_trace(go.Scatter(x=timestamps, y=ip_addresses, mode='lines', name='IP Addresses'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=timestamps, y=user_agents, mode='lines', name='User Agents'), row=1, col=2)
-    fig.add_trace(go.Bar(x=timestamps, y=referral_sources, name='Referral Sources'), row=2, col=1)
-
-    # Plot click details
-    fig.add_trace(go.Scatter(x=click_timestamps, y=click_locations, mode='markers', name='Clicks'), row=2, col=2)
-
-    fig.update_layout(title='URL Analytics Report', xaxis_title='Timestamp', yaxis_title='Count')
-
-    return fig
-
-
-
-@app.route('/analytics', methods=['GET', 'POST'])
-def analytics():
-    if request.method == 'POST':
-        short_url = request.form.get('short_url')
-
-        # Retrieve analytics data for the shortened URL
-        data = get_analytics(short_url)
-
-        if data:
-            # Generate analytics report
-            fig = generate_analytics_report(data)
-            plot = fig.to_html(full_html=False)
-            return render_template('dashboard.html', plot=plot)
-        else:
-            return 'No analytics data available'
-
-    return render_template('dashboard.html', plot=None)
 
 
 @login_manager.user_loader
@@ -114,19 +46,23 @@ def generate_short_id(num_of_chars: int):
     return ''.join(choice(string.ascii_letters + string.digits) for _ in range(num_of_chars))
 
 
-# def validate_email(email):
-    """Validate email format using regular expression"""
-    # pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    # return re.match(pattern, email)
+def validate_email(email):
+    # """Validate email format using regular expression"""
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    return re.match(pattern, email)
 
 
-# def validate_phone(phone):
-    """Validate phone number format using regular expression"""
-    # pattern = r'^\d{11}$'
-    # return re.match(pattern, phone)
+    # """Validate phone number format using python phonenumbers library"""
+def validate_phone(phone):
+    try:
+        parsed_number = phonenumbers.parse(phone, None)
+        return phonenumbers.is_valid_number(parsed_number)
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return False
 
 
 @app.route('/', methods=['GET', 'POST'])
+@cache.cached(timeout=60)
 def index():
     qr_image_data = b'My QR Code Data'
     return render_template('index.html')
@@ -153,16 +89,19 @@ def contact():
 
 
 @app.route('/about')
+@cache.cached(timeout=60)
 def about():
     return render_template('about.html')
 
 
 @app.route('/shortenit')
+@cache.cached(timeout=60)
 def shortenit():
     return render_template('shortenit.html')
 
 
 @app.route('/shortenedURL')
+@cache.cached(timeout=60)
 def shortenedURL():
     return render_template('shortenedURL.html')
 
@@ -187,14 +126,14 @@ def register():
         confirm_password = request.form.get('confirm_password')
 
         # Validate email
-        # if not validate_email(email):
-        #     flash(f'Invalid email address.')
-        #     return redirect(url_for('register'))
+        if not validate_email(email):
+            flash(f'Invalid email address.')
+            return redirect(url_for('register'))
 
         # Validate phone number
-        # if not validate_phone(phone):
-        #     flash(f'Invalid phone number.')
-        #     return redirect(url_for('register'))
+        if not validate_phone(phone):
+            flash(f'Invalid phone number.')
+            return redirect(url_for('register'))
 
         # Check if the user already exists in the database
         user = User.query.filter_by(email=email).first()
@@ -232,6 +171,7 @@ def register():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@cache.cached(timeout=60)
 def login():
     if current_user.is_authenticated:
         # Redirect to the homepage or another route
@@ -247,6 +187,9 @@ def login():
         if user and user.check_password(password):
             # Log in the user
             login_user(user)
+
+            # Store user ID in the session
+            session['user_id'] = user.id
             
             # Redirect to the homepage or another route
             return redirect(url_for('shortenit'))
@@ -259,7 +202,8 @@ def login():
 
 # The URL shortening route and function...
 @app.route('/shorten', methods=['GET', 'POST'])
-@limiter.limit("1/day", key_func=get_remote_address)
+@limiter.limit("10/day", key_func=get_remote_address)
+@cache.cached(timeout=60)
 @login_required
 def shorten():
     qr_image_data = b''
@@ -267,6 +211,9 @@ def shorten():
     if request.method == 'POST':
         url = request.form['url']
         short_id = request.form['custom_id']
+
+        # Get the authenticated user's ID
+        user_id = current_user.id
 
         if short_id and ShortUrls.query.filter_by(short_id=short_id).first():
             flash(f'Please enter a different custom ID!')
@@ -287,13 +234,12 @@ def shorten():
         qr.make_image(fill_color='black', back_color='white').save(qr_stream, 'PNG')
         qr_stream.seek(0)
 
-        # Log analytics data for the shortened URL
-        log_analytics(short_url, request.remote_addr, request.user_agent.string, request.referrer)
 
         new_link = ShortUrls(
+            user_id=user_id,
             original_url=url,
             short_id=short_id,
-            # qr_image_data=qr_stream.getvalue(),
+            short_url=short_url,
             click_count=0,
             created_at=datetime.now()
         )
@@ -309,6 +255,7 @@ def shorten():
 
 # The redirection route and function
 @app.route('/<short_id>')
+@cache.cached(timeout=60)
 @login_required
 def redirect_url(short_id):
     link = ShortUrls.query.filter_by(short_id=short_id).first()
@@ -320,24 +267,70 @@ def redirect_url(short_id):
     else:
         flash(f'Invalid URL')
         return redirect(url_for('shortenit'))
-    
 
-@app.route('/download_qr')
-def download_qr():
-    # Retrieve the QR code image stream from the query parameter
-    qr_stream = request.args.get('qr_image_data')
 
-    if qr_stream:
-        # Return the QR code image as a downloadable file
-        return send_file(BytesIO(qr_stream), attachment_filename='qr_code.png', as_attachment=True)
+@app.route('/download_qr/<qr_image_data>')
+def download_qr(qr_image_data):
+    # Convert the base64-encoded QR code image data back to bytes
+    qr_bytes = base64.b64decode(qr_image_data)
+
+    if qr_bytes:
+        qr_filename = 'qr_code.png'
+        return send_file(BytesIO(qr_bytes), attachment_filename=qr_filename, as_attachment=True)
     else:
-        abort(404, message='QR code image not found')
+        flash('No image generated')
+        return redirect(url_for('index'))
+
+
+def get_current_user():
+    # Using a session-based authentication system
+    user_id = session.get('user_id')  # Retrieve the user ID from the session
+    if user_id:
+        # Querying of the User model
+        user = User.query.get(user_id)  # Retrieve the user from the database based on the user ID
+        return user
+
+    # If user_id is not found in the session or the user doesn't exist, return None
+    return None
+
+
+def get_user_short_urls(user_id):
+    user = User.query.get(user_id)
+    if user:
+        return ShortUrls.query.filter_by(user_id=user.id).all()
+    else:
+        return []   
+
+
+@app.route('/dashboard')
+def dashboard():
+    # Retrieve the necessary data for the user dashboard
+    user = get_current_user()  # Example function to get the current user
+    short_urls = get_user_short_urls(user.id)  # Example function to get the user's short URLs
+
+    # Fetch click analytics for each short URL
+    click_analytics = {}
+    for short_url in short_urls:
+        click_analytics[short_url.id] = get_click_analytics(short_url.id)
+
+    # Render the dashboard template and pass the necessary data
+    return render_template('dashboard.html', user=user, short_urls=short_urls, click_analytics=click_analytics)
 
 
 @app.route('/history')
 def history():
     url_activities = ShortUrls.query.all()
     return render_template('history.html', url_activities=url_activities)
+
+def get_click_analytics(short_url_id):
+    clicks = Click.query.filter_by(short_url_id=short_url_id).all()
+    return clicks
+
+
+def populate_clicks(short_url_id, ip_address, user_agent, referral_source):
+    click = Click(short_url_id=short_url_id, ip_address=ip_address, user_agent=user_agent, referral_source=referral_source)
+    db.session.add(click)
+    db.session.commit()
 
 
 @app.route('/logout')
