@@ -14,6 +14,8 @@ cache = Cache(app)
 limiter = Limiter(app, default_limits=["10/day"])
 app.config.from_object(config("APP_SETTINGS"))
 
+# postgres://lazer_2tk2_user:8fybjWL256GTHQ0dcYDqsfb7XrHiYTiH@dpg-cidmjsd9aq0ce3fa1qi0-a.ohio-postgres.render.com/lazer_2tk2
+
 app.config['SESSION_COOKIE_NAME'] = 'LAZER_SESSION'
 app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60  # Session expiration time in seconds
 
