@@ -25,8 +25,8 @@ ordered-set==4.1.0
 packaging==23.1
 phonenumbers==8.13.15
 Pillow==9.5.0
-pkg_resources==0.0.0
-plotly==5.15.0
+pkg_resources
+plotly
 psycopg2-binary==2.9.6
 Pygments==2.15.1
 pypng==0.20220715.0
