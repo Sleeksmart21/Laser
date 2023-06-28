@@ -3,7 +3,7 @@ blinker==1.6.2
 cachelib==0.9.0
 click==8.1.3
 Deprecated==1.2.14
-Flask==2.3.2
+Flask
 Flask-Caching==2.0.2
 Flask-Limiter==3.3.1
 Flask-Login==0.6.2
