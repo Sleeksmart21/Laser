@@ -36,6 +36,6 @@ rich==13.4.2
 SQLAlchemy==2.0.12
 tenacity==8.2.2
 typing_extensions==4.5.0
-Werkzeug==2.3.3
-wrapt==1.15.0
-zipp==3.15.0
+Werkzeug
+wrapt
+zipp
