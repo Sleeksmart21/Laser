@@ -4,8 +4,6 @@ from decouple import config
 DATABASE_URI = config("DATABASE_URL")
 if DATABASE_URI.startswith("postgres://"):
     DATABASE_URI = DATABASE_URI.replace("postgres://", "postgresql://", 1)
-    # postgres://lazer_2tk2_user:8fybjWL256GTHQ0dcYDqsfb7XrHiYTiH@dpg-cidmjsd9aq0ce3fa1qi0-a.ohio-postgres.render.com/lazer_2tk2
-
 
 class Config(object):
     DEBUG = False
