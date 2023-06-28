@@ -30,7 +30,7 @@ psycopg2-binary==2.9.6
 Pygments==2.15.1
 pypng==0.20220715.0
 python-decouple==3.8
-python-dotenv==1.0.0
+python-dotenv
 qrcode==7.4.2
 rich==13.4.2
 SQLAlchemy==2.0.12
