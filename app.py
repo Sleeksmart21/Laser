@@ -26,15 +26,16 @@ cache = Cache()
 app = Flask(__name__)
 cache.init_app(app, config={'CACHE_TYPE': 'simple'})
 limiter = Limiter(app, default_limits=["10/day"])
-app.secret_key = "5df3c2b8576617decbf7"
+app.secret_key = ('SECRET_KEY')
 
 # Flask-Login configuration
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Database configuration
-base_dir = os.path.dirname(os.path.realpath(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"]='sqlite:///' + os.path.join(base_dir, 'snipit.db') 
+# base_dir = os.path.dirname(os.path.realpath(__file__))
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+# app.config["SQLALCHEMY_DATABASE_URI"]='sqlite:///' + os.path.join(base_dir, 'snipit.db') 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # db.init_app(app)
@@ -52,15 +53,15 @@ class ShortUrls(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     clicks = db.relationship('Click', backref='shorturls', lazy=True)
-    shorturls_user = db.relationship('User', backref='shorturls')
+    user = db.relationship('User', backref='short_urls', overlaps="shorturls,shorturls_user")
 
-    def __init__(self, user_id, original_url, short_id, short_url, click_count, created_at):
+    def __init__(self, user_id, original_url, short_id, short_url, click_count=0):
         self.user_id = user_id
         self.original_url = original_url
         self.short_id = short_id
         self.short_url = short_url
         self.click_count = click_count
-        self.created_at = datetime.now()
+        self.created_at = datetime.utcnow()
 
 
 class Click(db.Model):
@@ -77,14 +78,7 @@ class Click(db.Model):
         self.ip_address = ip_address
         self.user_agent = user_agent
         self.referral_source = referral_source
-        self.created_at = datetime.now()
-
-
-class Contact(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
-    message = db.Column(db.Text, nullable=False)
+        self.created_at = datetime.utcnow()
 
 
 class User(UserMixin, db.Model):
@@ -100,10 +94,9 @@ class User(UserMixin, db.Model):
     primary_use_case = db.Column(db.String(100), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     password_hash = db.Column(db.String(150))
-    created_at = db.Column(db.DateTime(), default=datetime.now(), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    short_urls = db.relationship('ShortUrls', backref='users')
-
+    short_urls = db.relationship('ShortUrls', backref='user', lazy=True, overlaps="shorturls,shorturls_user")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -111,6 +104,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=False)
 
 
 @login_manager.user_loader
