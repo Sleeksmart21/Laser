@@ -18,30 +18,25 @@ from io import BytesIO
 from flask_sqlalchemy import SQLAlchemy
 import re
 
-
-
 cache = Cache()
-
 
 app = Flask(__name__)
 cache.init_app(app, config={'CACHE_TYPE': 'simple'})
 limiter = Limiter(app, default_limits=["10/day"])
-app.secret_key = ('SECRET_KEY')
+app.secret_key = 'SECRET_KEY'
 
 # Flask-Login configuration
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Database configuration
-# base_dir = os.path.dirname(os.path.realpath(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-# app.config["SQLALCHEMY_DATABASE_URI"]='sqlite:///' + os.path.join(base_dir, 'snipit.db') 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# db.init_app(app)
+# Initialize SQLAlchemy
 db = SQLAlchemy(app)
 
-
+# Define the models
 class ShortUrls(db.Model):
     __tablename__ = 'shorturls'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,8 +47,8 @@ class ShortUrls(db.Model):
     click_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    clicks = db.relationship('Click', backref='shorturls', lazy=True)
-    user = db.relationship('User', backref='short_urls', overlaps="shorturls,shorturls_user")
+    clicks = db.relationship('Click', backref='shorturl', lazy=True)
+    user = db.relationship('User', backref='shorturls', overlaps="shorturls,shorturls_user")
 
     def __init__(self, user_id, original_url, short_id, short_url, click_count=0):
         self.user_id = user_id
@@ -105,16 +100,10 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-class Contact(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # Custom filter for base64 encoding
 @app.template_filter('b64encode')
@@ -426,6 +415,7 @@ def redirect_url(short_id):
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
 
 
 if __name__ == '__main__':
