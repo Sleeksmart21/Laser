@@ -36,6 +36,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize SQLAlchemy
 db = SQLAlchemy(app)
 
+
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
+
 # Define the models
 class ShortUrls(db.Model):
     __tablename__ = 'shorturls'
@@ -47,8 +55,9 @@ class ShortUrls(db.Model):
     click_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    clicks = db.relationship('Click', backref='shorturl', lazy=True)
-    user = db.relationship('User', backref='shorturls', overlaps="shorturls,shorturls_user")
+	# A ShortURL Can Have Many clicks 
+    clickers = db.relationship('Click', backref='shorturl', lazy=True)
+    # user = db.relationship('User', backref='shorturls', overlaps="shorturls,shorturls_user")
 
     def __init__(self, user_id, original_url, short_id, short_url, click_count=0):
         self.user_id = user_id
@@ -91,7 +100,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(150))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    short_urls = db.relationship('ShortUrls', backref='user', lazy=True, overlaps="shorturls,shorturls_user")
+	# User Can Have Many ShortURLs 
+    short_urls = db.relationship('ShortUrls', backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
