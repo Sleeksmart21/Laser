@@ -65,12 +65,12 @@ class ShortUrls(db.Model):
         self.short_id = short_id
         self.short_url = short_url
         self.click_count = click_count
-        self.created_at = datetime.utcnow()
-        if created_at is None:
-            self.created_at = datetime.utcnow()
-        else:
-            self.created_at = created_at
-
+        # self.created_at = datetime.utcnow()
+        # if created_at is None:
+            # self.created_at = datetime.utcnow()
+        # else:
+            # self.created_at = created_at
+# 
 
 class Click(db.Model):
     __tablename__ = 'clicks'
@@ -86,7 +86,7 @@ class Click(db.Model):
         self.ip_address = ip_address
         self.user_agent = user_agent
         self.referral_source = referral_source
-        self.created_at = datetime.utcnow()
+        # self.created_at = datetime.utcnow()
 
 
 class User(UserMixin, db.Model):
@@ -236,7 +236,7 @@ def shorten():
             short_id=short_id,
             short_url=short_url,
             click_count=0,
-            created_at=datetime.now()
+            created_at=datetime.utcnow()
         )
         db.session.add(new_link)
         db.session.commit()
