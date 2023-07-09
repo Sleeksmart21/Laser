@@ -13,7 +13,7 @@
             <table class="table" style="background-color: #ffff;">
                 <thead>
                     <tr>
-                        <th scope="col">Original URL</th>
+                        <th style="width: 30%;" scope="col">Original URL</th>
                         <th scope="col">Custom URL</th>
                         <th scope="col">Generated Short URL</th>
                         <th scope="col">URL Click Count</th>
@@ -23,7 +23,7 @@
                 <tbody>
                     {% for activity in url_activities %}
                     <tr>
-                        <td>{{ activity.original_url }}</td>
+                        <td style="width: 30%;">{{ activity.original_url }}</td>
                         <td>{{ activity.short_id }}</td>
                         <td>{{ activity.short_url }}</td>
                         <td>{{ activity.click_count }}</td>

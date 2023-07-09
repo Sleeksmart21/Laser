@@ -34,7 +34,7 @@
         <!-- /* Return the shortened URL */ -->
     {% if short_url %}
     <hr>
-    <span><a href="{{ short_url }}" target="_blank">{{ short_url }}</a></span>
+    <span class="text-white"><a href="{{ short_url }}" target="_blank">{{ short_url }}</a></span>
     {% endif %}
     
         <!-- /* Share to social media platforms */ -->
@@ -84,7 +84,9 @@
             links and unlock valuable insights. Experience the difference analytics can make for your URL shortening
             service. Sign up today and unleash the full potential of your shortened links!</p>
         </div>
-
+        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="{{ url_for('dashboard') }}">Get
+          Analytics</a>
+        </div>
       </div>
     </div>
   </div>

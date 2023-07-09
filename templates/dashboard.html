@@ -2,28 +2,29 @@
 
 {% block content %}
     <div class="container">
-        <h1>Welcome, {{ current_user.first_name }}!</h1>
-        <h2>Short URL Analytics</h2>
+        <h1 class="text-white">Welcome, {{ current_user.first_name }}!</h1>
+        <h2 class="text-white">Short URL Analytics</h2>
 
-        <table class="table">
+        <table class="table bg-white table-bordered">
             <thead>
                 <tr>
                     <th>Short URL</th>
-                    <th>Original URL</th>
+                    <th style="width: 30%;">Original URL</th>
                     <th>Click Count</th>
                     <th>Latest Click Date</th>
                     <th>Click Details</th>
+                    <th>Delete</th>
                 </tr>
             </thead>
             <tbody>
                 {% for short_url in short_urls %}
                     <tr>
                         <td>{{ short_url.short_url }}</td>
-                        <td>{{ short_url.original_url }}</td>
+                        <td style="width: 30%;">{{ short_url.original_url }}</td>
                         <td>{{ short_url.click_count }}</td>
                         <td>{{ short_url.latest_click_date }}</td>
                         <td>
-                            <table class="table">
+                            <table class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th>IP Address</th>
@@ -41,6 +42,11 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('delete_url', url_id=short_url.id) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this URL?')">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

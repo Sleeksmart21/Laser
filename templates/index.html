@@ -14,8 +14,8 @@
       <h3 style="padding-bottom: 5px; color: lightgray;">Click The Button To Get Started</h3>
       <a href="{{ url_for('shortenit')}}"><button class="btn btn-light">Shorten Your URL</button></a>
     {% else %}
-      <h5 style="padding-bottom: 5px;">Hello, Welcome.</h5>
-      <h3>To Shorten Your URL</h3>
+      <h5 class="text-white" style="padding-bottom: 5px;">Hello, Welcome.</h5>
+      <h3 class="text-white">To Shorten Your URL</h3>
     <div class="card text-white bg-secondary my-5 py-4 text-center">
         <a href="{{ url_for('login')}}"><button class="btn btn-light">Login Here</button></a>
         <hr>
@@ -61,43 +61,6 @@
         <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
       </div>
     </div>
-  </div>
-
-  <div class="row gx-4 gx-lg-5">
-    <div class="col-md-4 mb-5">
-      <div class="card h-100">
-        <img class="card-img-top" src="{{url_for('static', filename='images/dev.svg')}}" alt="Card image" style="width:50px; height: 50px;">
-        <!-- <img class="card-img-top" src="path_to_web_apps_image.jpg" alt="Web Apps Design and Development"> -->
-        <div class="card-body">
-          <h2 class="card-title">Web Apps Design and Development</h2>
-          <p class="card-text">We specialize in designing and developing interactive web applications that enhance user experience.</p>
-        </div>
-        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
-      </div>
-    </div>
-    <div class="col-md-4 mb-5">
-        <div class="card h-100">
-          <!-- <img class="card-img-top" src="path_to_web_apps_image.jpg" alt="Web Apps Design and Development"> -->
-          <img class="card-img-top" src="{{url_for('static', filename='images/dev.svg')}}" alt="Card image" style="width:50px; height: 50px;">
-          <div class="card-body">
-            <h2 class="card-title">Web Apps Design and Development</h2>
-            <p class="card-text">We specialize in designing and developing interactive web applications that enhance user experience.</p>
-          </div>
-          <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
-        </div>
-      </div>
-      <div class="col-md-4 mb-5">
-        <div class="card h-100">
-          <img class="card-img-top" src="{{url_for('static', filename='images/dev.svg')}}" alt="Card image" style="width:50px; height: 50px;">
-          <!-- <img class="card-img-top" src="path_to_web_apps_image.jpg" alt="Web Apps Design and Development"> -->
-          <div class="card-body">
-            <h2 class="card-title">Web Apps Design and Development</h2>
-            <p class="card-text">We specialize in designing and developing interactive web applications that enhance user experience.</p>
-          </div>
-          <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
-        </div>
-      </div>
-    <!-- Add more service cards as needed -->
   </div>
 </div>
 

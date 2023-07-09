@@ -81,6 +81,8 @@ class Click(db.Model):
     referral_source = db.Column(db.String(2048))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    shortened_url = db.relationship('ShortUrls', backref='click', lazy=True)
+
     def __init__(self, short_url_id, ip_address, user_agent, referral_source):
         self.short_url_id = short_url_id
         self.ip_address = ip_address
@@ -102,6 +104,7 @@ class User(UserMixin, db.Model):
     primary_use_case = db.Column(db.String(100), nullable=False)
     country = db.Column(db.String(50), nullable=False)
     password_hash = db.Column(db.String(150))
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 	# User Can Have Many ShortURLs 
@@ -249,7 +252,7 @@ def shorten():
     return render_template('shortenedURL.html', qr_image_data=qr_image_data)
 
 
-@app.route('/download_qr/<qr_image_data>')
+@app.route('/download_qr/<path:qr_image_data>')
 def download_qr(qr_image_data):
     # Convert the base64-encoded QR code image data back to bytes
     qr_bytes = base64.b64decode(qr_image_data)
@@ -260,6 +263,54 @@ def download_qr(qr_image_data):
     else:
         flash('No image generated')
         return redirect(url_for('index'))
+
+
+@app.route('/delete_url/<int:url_id>', methods=['POST'])
+@login_required
+def delete_url(url_id):
+    url = ShortUrls.query.get(url_id)
+
+    if url:
+        # Check if the URL belongs to the current user
+        if url.user_id == current_user.id:
+            # Delete the URL from the database
+            db.session.delete(url)
+            db.session.commit()
+            flash('URL deleted successfully.')
+        else:
+            flash('You are not authorized to delete this URL.')
+    else:
+        flash('URL not found.')
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        # Redirect to the login page or another route
+        return redirect(url_for('admin_login'))
+
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        flash('User deleted successfully.')
+    else:
+        flash('User not found.')
+
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    if not current_user.is_admin:
+        # Redirect to the login page or another route
+        return redirect(url_for('admin_login'))
+
+    users = User.query.all()
+    return render_template('admin_dashboard.html', users=users)
 
 
 def get_current_user():
@@ -274,6 +325,16 @@ def get_current_user():
     return None
 
 
+@app.route('/history')
+def history():
+    url_activities = ShortUrls.query.all()
+    return render_template('history.html', url_activities=url_activities)
+
+def get_click_analytics(short_url_id):
+    clicks = Click.query.filter_by(short_url_id=short_url_id).all()
+    return clicks
+
+
 def get_user_short_urls(user_id):
     user = User.query.get(user_id)
     if user:
@@ -285,8 +346,8 @@ def get_user_short_urls(user_id):
 @app.route('/dashboard')
 def dashboard():
     # Retrieve the necessary data for the user dashboard
-    user = get_current_user()  # Example function to get the current user
-    short_urls = get_user_short_urls(user.id)  # Example function to get the user's short URLs
+    user = get_current_user()  # function to get the current user
+    short_urls = get_user_short_urls(user.id)  # function to get the user's short URLs
 
     # Fetch click analytics for each short URL
     click_analytics = {}
@@ -297,22 +358,13 @@ def dashboard():
     return render_template('dashboard.html', user=user, short_urls=short_urls, click_analytics=click_analytics)
 
 
-@app.route('/history')
-def history():
-    url_activities = ShortUrls.query.all()
-    return render_template('history.html', url_activities=url_activities)
-
-def get_click_analytics(short_url_id):
-    clicks = Click.query.filter_by(short_url_id=short_url_id).all()
-    return clicks
-
-
 def populate_clicks(short_url_id, ip_address, user_agent, referral_source):
     click = Click(short_url_id=short_url_id, ip_address=ip_address, user_agent=user_agent, referral_source=referral_source)
     db.session.add(click)
     db.session.commit()
 
 
+# User registration Route
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -371,13 +423,54 @@ def register():
             # Save the new user to the database
             db.session.add(new_user)
             db.session.commit()
+
+            # Check if this is the first user
+            if User.query.count() == 1:
+                # Assign the admin role to the first user
+                new_user.is_admin = True
+                db.session.commit()
     
             flash(f'Registration successful. Please log in.')
             return redirect(url_for('login'))
     
         return render_template('register.html')
-    
 
+
+# Create Admin Acount
+@app.route('/create_admin', methods=['GET', 'POST'])
+@login_required
+def create_admin():
+    if not current_user.is_admin:
+        return 'Unauthorized'
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        # Check if admin account already exists
+        admin = User.query.filter_by(email=email).first()
+        if admin:
+            return 'Admin account already exists'
+
+        # Create a new admin user
+        new_admin = User(email=email, password_hash=generate_password_hash(password), is_admin=True)
+        db.session.add(new_admin)
+        db.session.commit()
+
+        return 'Admin account created successfully'
+
+    return '''
+        <form method="post">
+            <label for="email">Email:</label>
+            <input type="email" name="email" required><br>
+            <label for="password">Password:</label>
+            <input type="password" name="password" required><br>
+            <input type="submit" value="Create Admin Account">
+        </form>
+    '''
+
+    
+# Route for User login
 @app.route('/login', methods=['GET', 'POST'])
 @cache.cached(timeout=60)
 def login():
@@ -408,6 +501,32 @@ def login():
         
         return render_template('login.html')
 
+
+# Route for admin login
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if current_user.is_authenticated:
+        # Redirect to the admin dashboard or another route
+        return redirect(url_for('admin_dashboard'))
+
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        # Find the user by email address
+        user = User.query.filter_by(email=email).first()
+
+        if user and user.check_password(password) and user.is_admin:
+            # Log in the admin user
+            login_user(user)
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid email or password.')
+
+    return render_template('admin_login.html')
+
+
+
 # The redirection route and function
 @app.route('/<short_id>')
 @cache.cached(timeout=60)
@@ -418,6 +537,12 @@ def redirect_url(short_id):
     if link:
         link.click_count += 1
         db.session.commit()
+
+        # Populate the Clicks table with the click details
+        click = Click(short_url_id=link.id, ip_address=request.remote_addr, user_agent=request.user_agent.string, referral_source=request.referrer)
+        db.session.add(click)
+        db.session.commit()
+
         return redirect(link.original_url)
     else:
         flash('Invalid URL')
