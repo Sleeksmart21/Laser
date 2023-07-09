@@ -59,13 +59,17 @@ class ShortUrls(db.Model):
     clickers = db.relationship('Click', backref='shorturl', lazy=True)
     # user = db.relationship('User', backref='shorturls', overlaps="shorturls,shorturls_user")
 
-    def __init__(self, user_id, original_url, short_id, short_url, click_count=0):
+    def __init__(self, user_id, original_url, short_id, short_url, click_count=0, created_at=None):
         self.user_id = user_id
         self.original_url = original_url
         self.short_id = short_id
         self.short_url = short_url
         self.click_count = click_count
         self.created_at = datetime.utcnow()
+        if created_at is None:
+            self.created_at = datetime.utcnow()
+        else:
+            self.created_at = created_at
 
 
 class Click(db.Model):
