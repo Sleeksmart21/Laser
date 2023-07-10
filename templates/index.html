@@ -10,8 +10,8 @@
     <!-- <div class="col-lg-12"> -->
     <!-- <div class="card text-white bg-secondary my-5 py-4 text-center"> -->
     {% if current_user.is_authenticated %}
-      <h5 style="padding-bottom: 5px; color: lightgray;">Hello, Welcome {{current_user.first_name|capitalize}}.</h5>
-      <h3 style="padding-bottom: 5px; color: lightgray;">Click The Button To Get Started</h3>
+      <h5 style="padding-bottom: 5px; color: white;">Hello, Welcome {{current_user.first_name|capitalize}}.</h5>
+      <h3 style="padding-bottom: 5px; color: white;">Click The Button To Get Started</h3>
       <a href="{{ url_for('shortenit')}}"><button class="btn btn-light">Shorten Your URL</button></a>
     {% else %}
       <h5 class="text-white" style="padding-bottom: 5px;">Hello, Welcome.</h5>
@@ -36,7 +36,7 @@
           <h2 class="card-title">Website Development</h2>
           <p class="card-text">We specialize in creating responsive and visually appealing websites that meet your business needs.</p>
         </div>
-        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
+        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="{{ url_for('readmore') }}">Learn More</a></div>
       </div>
     </div>
     <div class="col-md-4 mb-5">
@@ -47,7 +47,7 @@
           <h2 class="card-title">Software Development</h2>
           <p class="card-text">We offer custom software development services to help you build scalable and efficient solutions.</p>
         </div>
-        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
+        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="{{ url_for('readmore') }}">Learn More</a></div>
       </div>
     </div>
     <div class="col-md-4 mb-5">
@@ -58,7 +58,7 @@
           <h2 class="card-title">Website Management</h2>
           <p class="card-text">We provide comprehensive website management services, ensuring your website runs smoothly and stays up-to-date.</p>
         </div>
-        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="#!">Learn More</a></div>
+        <div class="card-footer"><a class="btn btn-secondary btn-sm" href="{{ url_for('readmore') }}">Learn More</a></div>
       </div>
     </div>
   </div>

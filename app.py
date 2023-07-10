@@ -54,23 +54,20 @@ class ShortUrls(db.Model):
     short_url = db.Column(db.String(100))
     click_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    latest_click_date = db.Column(db.DateTime)
 
 	# A ShortURL Can Have Many clicks 
     clickers = db.relationship('Click', backref='shorturl', lazy=True)
     # user = db.relationship('User', backref='shorturls', overlaps="shorturls,shorturls_user")
 
-    def __init__(self, user_id, original_url, short_id, short_url, click_count=0, created_at=None):
+    def __init__(self, user_id, original_url, short_id, short_url, click_count=0, created_at=None, latest_click_date=None):
         self.user_id = user_id
         self.original_url = original_url
         self.short_id = short_id
         self.short_url = short_url
         self.click_count = click_count
-        # self.created_at = datetime.utcnow()
-        # if created_at is None:
-            # self.created_at = datetime.utcnow()
-        # else:
-            # self.created_at = created_at
-# 
+        self.latest_click_date = latest_click_date
+ 
 
 class Click(db.Model):
     __tablename__ = 'clicks'
@@ -166,11 +163,28 @@ def shortenit():
     return render_template('shortenit.html')
 
 
+@app.route('/readmore')
+@cache.cached(timeout=60)
+def readmore():
+    return render_template('readmore.html')
+
+
+@app.route('/admin_dashboard')
+@cache.cached(timeout=60)
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+
+
+@app.route('/admin_login')
+@cache.cached(timeout=60)
+def admin_login():
+    return render_template('admin_login.html')
+
+
 @app.route('/shortenedURL')
 @cache.cached(timeout=60)
 def shortenedURL():
     return render_template('shortenedURL.html')
-
 
 
 @app.route('/contact', methods=['GET', 'POST'])
@@ -197,6 +211,12 @@ def contact():
 def analytics():
     total_urls = ShortUrls.query.count()
     return render_template('analytics.html', total_urls=total_urls)
+
+def get_latest_click_date(clicks):
+    if clicks:
+        latest_click = max(clicks, key=lambda x: x.created_at)
+        return latest_click.created_at
+    return None
 
 
 # The URL shortening route and function...
@@ -237,18 +257,28 @@ def shorten():
             user_id=user_id,
             original_url=url,
             short_id=short_id,
-            short_url=short_url,
+            short_url='',
             click_count=0,
             created_at=datetime.utcnow()
         )
         db.session.add(new_link)
         db.session.commit()
 
+        # Update the short URL with the host URL and short ID
         short_url = request.host_url + short_id
-        if qr_image_data is not None:
-            return render_template('shortenedURL.html', short_url=short_url, qr_image_data=qr_stream.getvalue())
-        else:
-            flash('No image generated')
+        new_link.short_url = short_url
+        db.session.commit()
+
+        # Fetch the updated short URL with its database ID
+        new_link = ShortUrls.query.filter_by(short_id=short_id).first()
+
+        # short_url = request.host_url + short_id
+        return render_template('shortenedURL.html', short_url=short_url, qr_image_data=qr_stream.getvalue(),
+                               new_link=new_link)
+        # if qr_image_data is not None:
+            # return render_template('shortenedURL.html', short_url=short_url, qr_image_data=qr_stream.getvalue())
+        # else:
+            # flash('No image generated')
     return render_template('shortenedURL.html', qr_image_data=qr_image_data)
 
 
@@ -353,6 +383,9 @@ def dashboard():
     click_analytics = {}
     for short_url in short_urls:
         click_analytics[short_url.id] = get_click_analytics(short_url.id)
+        short_url.latest_click_date = get_latest_click_date(click_analytics[short_url.id])
+
+    db.session.commit()
 
     # Render the dashboard template and pass the necessary data
     return render_template('dashboard.html', user=user, short_urls=short_urls, click_analytics=click_analytics)
