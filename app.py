@@ -334,9 +334,9 @@ def delete_user(user_id):
 
 @app.route('/admin/dashboard')
 @login_required
-def admin_dashboard():
+def admin_board():
     if not current_user.is_admin:
-        # Redirect to the login page or another route
+        # Redirect to the login page
         return redirect(url_for('admin_login'))
 
     users = User.query.all()
@@ -537,7 +537,7 @@ def login():
 
 # Route for admin login
 @app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
+def admin_log():
     if current_user.is_authenticated:
         # Redirect to the admin dashboard or another route
         return redirect(url_for('admin_dashboard'))
