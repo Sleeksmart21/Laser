@@ -21,7 +21,9 @@
     </div>
   </div>
 
-  <div class="row gx-4 gx-lg-5 align-items-center my-5 bg-light">
+  <!-- <div class="row gx-4 gx-lg-5 align-items-center my-5 bg-light"> -->
+  <div class="card bg-light my-5 py-4">
+
     
     <!-- /*Show the Flash message */ -->
     {% for message in get_flashed_messages() %}
@@ -52,15 +54,15 @@
         <div class="card-body">
           <!-- /*Return the QR Code for the shortened URL */ -->
           <h2 class="card-title">QR Code</h2>
-          {% if qr_image_data %}
+          {% if qr_image_data %}       
           <img src="data:image/png;base64,{{ qr_image_data|b64encode }}" alt="QR Code"
             style="margin-left: 50px; justify-content: center;">
           {% else %}
           <p>No QR code available</p>
           {% endif %}
         </div>
-        <div class="card-footer"><a class="btn btn-secondary btn-sm"
-            href="{{ url_for('download_qr', qr_image_data=qr_image_data|b64encode) }}">Download QRcode</a>
+        <div class="card-footer">
+          <a class="btn btn-secondary btn-sm" id="download-qrcode-btn">Download QR Code</a>
         </div>
       </div>
     </div>
@@ -120,6 +122,13 @@
     const encodedURL = encodeURIComponent(url);
     window.open('https://www.linkedin.com/shareArticle?url=' + encodedURL, '_blank');
   }
+
+  document.getElementById('download-qrcode-btn').addEventListener('click', function() {
+    var link = document.createElement('a');
+    link.href = 'data:image/png;base64,{{ qr_image_data|b64encode }}';
+    link.download = 'qrcode.png';
+    link.click();
+  });
 </script>
 
 {% endblock content %}
