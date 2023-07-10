@@ -169,18 +169,6 @@ def readmore():
     return render_template('readmore.html')
 
 
-@app.route('/admin_dashboard')
-@cache.cached(timeout=60)
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
-
-
-@app.route('/admin_login')
-@cache.cached(timeout=60)
-def admin_login():
-    return render_template('admin_login.html')
-
-
 @app.route('/shortenedURL')
 @cache.cached(timeout=60)
 def shortenedURL():
@@ -334,7 +322,7 @@ def delete_user(user_id):
 
 @app.route('/admin/dashboard')
 @login_required
-def admin_board():
+def admin_dashboard():
     if not current_user.is_admin:
         # Redirect to the login page
         return redirect(url_for('admin_login'))
@@ -537,7 +525,7 @@ def login():
 
 # Route for admin login
 @app.route('/admin/login', methods=['GET', 'POST'])
-def admin_log():
+def admin_login():
     if current_user.is_authenticated:
         # Redirect to the admin dashboard or another route
         return redirect(url_for('admin_dashboard'))
