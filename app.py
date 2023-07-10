@@ -270,28 +270,6 @@ def shorten():
     return render_template('shortenedURL.html', qr_image_data=qr_image_data)
 
 
-@app.route('/download_qr/<path:qr_image_data>')
-def download_qr(qr_image_data):
-    try:
-        # Decode the base64-encoded QR code image data
-        qr_bytes = base64.b64decode(qr_image_data)
-
-        if qr_bytes:
-            qr_filename = 'qr_code.png'
-            # Create a temporary file to store the QR code image
-            with open(qr_filename, 'wb') as f:
-                f.write(qr_bytes)
-            
-            # Return the file as an attachment for download
-            return send_file(qr_filename, attachment_filename=qr_filename, as_attachment=True)
-        else:
-            flash('No image generated')
-            return redirect(url_for('index'))
-    except Exception as e:
-        flash('Error occurred while generating the QR code')
-        return redirect(url_for('index'))
-
-
 @app.route('/delete_url/<int:url_id>', methods=['POST'])
 @login_required
 def delete_url(url_id):
