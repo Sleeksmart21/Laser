@@ -5,6 +5,7 @@ from random import choice
 import string 
 import base64
 import os
+from PIL import Image
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -149,12 +150,12 @@ def validate_phone(phone):
 @cache.cached(timeout=60)
 def index():
     qr_image_data = b'My QR Code Data'
-    return render_template('index.html')
+    return render_template('index.html', title='Home Page')
 
 @app.route('/about')
 @cache.cached(timeout=60)
 def about():
-    return render_template('about.html')
+    return render_template('about.html', title='About Page')
 
 
 @app.route('/shortenit')
@@ -190,7 +191,7 @@ def contact():
         db.session.commit()
         
         # Redirect or render a success page
-        return render_template('contact_success.html')
+        return render_template('contact_success.html', title='Success Page')
     
     return render_template('contact.html')
 
@@ -237,9 +238,19 @@ def shorten():
         qr.add_data(url)
         qr.make(fit=True)
 
+        # Generate the QR code with logo
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+
+        # Add logo to the QR code
+        logo_path = url_for('static', filename='images/lazer logo color.png')
+        qr_image_with_logo = add_logo_to_qr(qr_image, logo_path)
+
+        
+        # Save the QR code image to a stream
         qr_stream = BytesIO()
-        qr.make_image(fill_color='black', back_color='white').save(qr_stream, 'PNG')
+        qr_image_with_logo.save(qr_stream, 'PNG')
         qr_stream.seek(0)
+        
 
         new_link = ShortUrls(
             user_id=user_id,
@@ -268,6 +279,26 @@ def shorten():
         # else:
             # flash('No image generated')
     return render_template('shortenedURL.html', qr_image_data=qr_image_data)
+
+
+def add_logo_to_qr(qr_image, logo_path):
+    # Open the logo image
+    logo_image = Image.open(logo_path)
+
+    # Calculate the position to place the logo
+    qr_width, qr_height = qr_image.size
+    logo_width, logo_height = logo_image.size
+    logo_size = int(min(qr_width, qr_height) * 0.2)  # Adjust the logo size as needed
+    logo_position = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+
+    # Resize the logo image to the desired size
+    logo_image = logo_image.resize((logo_size, logo_size), Image.ANTIALIAS)
+
+    # Paste the logo image onto the QR code
+    qr_image.paste(logo_image, logo_position)
+
+    return qr_image
+
 
 
 @app.route('/delete_url/<int:url_id>', methods=['POST'])
@@ -333,7 +364,7 @@ def get_current_user():
 @app.route('/history')
 def history():
     url_activities = ShortUrls.query.all()
-    return render_template('history.html', url_activities=url_activities)
+    return render_template('history.html', url_activities=url_activities, title='History Page')
 
 def get_click_analytics(short_url_id):
     clicks = Click.query.filter_by(short_url_id=short_url_id).all()
@@ -363,7 +394,7 @@ def dashboard():
     db.session.commit()
 
     # Render the dashboard template and pass the necessary data
-    return render_template('dashboard.html', user=user, short_urls=short_urls, click_analytics=click_analytics)
+    return render_template('dashboard.html', title='Dashboard Page', user=user, short_urls=short_urls, click_analytics=click_analytics)
 
 
 def populate_clicks(short_url_id, ip_address, user_agent, referral_source):
@@ -441,7 +472,7 @@ def register():
             flash(f'Registration successful. Please log in.')
             return redirect(url_for('login'))
     
-        return render_template('register.html')
+        return render_template('register.html', title='Register Page')
 
 
 # Create Admin Acount
@@ -507,7 +538,7 @@ def login():
                 flash('Invalid email or password.')
                 return redirect(url_for('login'))
         
-        return render_template('login.html')
+        return render_template('login.html', title='Login Page')
 
 
 # Route for admin login
