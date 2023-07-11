@@ -208,6 +208,38 @@ def get_latest_click_date(clicks):
     return None
 
 
+def add_logo_to_qr(qr_image, logo_path):
+    # Open the logo image
+    logo_image = Image.open(logo_path)
+
+    # Calculate the position to place the logo
+    qr_width, qr_height = qr_image.size
+    logo_width, logo_height = logo_image.size
+    logo_size = int(min(qr_width, qr_height) * 0.2)  # Adjust the logo size as needed
+    logo_position = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+
+    # Resize the logo image to the desired size
+    logo_image = logo_image.resize((logo_size, logo_size), Image.ANTIALIAS)
+
+    # Create a mask for the logo image with transparency
+    logo_mask = logo_image.convert("RGBA")
+    logo_mask_data = logo_mask.getdata()
+    transparent_mask_data = []
+    for item in logo_mask_data:
+        # Set pixels with white background to fully transparent
+        if item[:3] == (255, 255, 255):
+            transparent_mask_data.append((255, 255, 255, 0))
+        else:
+            transparent_mask_data.append(item)
+
+    logo_mask.putdata(transparent_mask_data)
+
+    # Paste the logo image onto the QR code with transparency
+    qr_image.paste(logo_mask, logo_position, logo_mask)
+
+    return qr_image
+
+
 # The URL shortening route and function...
 @app.route('/shorten', methods=['GET', 'POST'])
 @limiter.limit("10/day", key_func=get_remote_address)
@@ -279,39 +311,6 @@ def shorten():
         # else:
             # flash('No image generated')
     return render_template('shortenedURL.html', qr_image_data=qr_image_data)
-
-
-def add_logo_to_qr(qr_image, logo_path):
-    # Open the logo image
-    logo_image = Image.open(logo_path)
-
-    # Calculate the position to place the logo
-    qr_width, qr_height = qr_image.size
-    logo_width, logo_height = logo_image.size
-    logo_size = int(min(qr_width, qr_height) * 0.2)  # Adjust the logo size as needed
-    logo_position = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
-
-    # Resize the logo image to the desired size
-    logo_image = logo_image.resize((logo_size, logo_size), Image.ANTIALIAS)
-
-    # Create a mask for the logo image with transparency
-    logo_mask = logo_image.convert("RGBA")
-    logo_mask_data = logo_mask.getdata()
-    transparent_mask_data = []
-    for item in logo_mask_data:
-        # Set pixels with white background to fully transparent
-        if item[:3] == (255, 255, 255):
-            transparent_mask_data.append((255, 255, 255, 0))
-        else:
-            transparent_mask_data.append(item)
-
-    logo_mask.putdata(transparent_mask_data)
-
-    # Paste the logo image onto the QR code with transparency
-    qr_image.paste(logo_mask, logo_position, logo_mask)
-
-    return qr_image
-
 
 
 @app.route('/delete_url/<int:url_id>', methods=['POST'])
