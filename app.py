@@ -242,7 +242,7 @@ def shorten():
         qr_image = qr.make_image(fill_color="black", back_color="white")
 
         # Add logo to the QR code
-        logo_path = url_for('static', filename='images/lazer logo color.png')
+        logo_path = os.path.join(app.root_path, 'static/images/lazer logo color white.png')
         qr_image_with_logo = add_logo_to_qr(qr_image, logo_path)
 
         
@@ -250,7 +250,7 @@ def shorten():
         qr_stream = BytesIO()
         qr_image_with_logo.save(qr_stream, 'PNG')
         qr_stream.seek(0)
-        
+
 
         new_link = ShortUrls(
             user_id=user_id,
@@ -294,8 +294,21 @@ def add_logo_to_qr(qr_image, logo_path):
     # Resize the logo image to the desired size
     logo_image = logo_image.resize((logo_size, logo_size), Image.ANTIALIAS)
 
-    # Paste the logo image onto the QR code
-    qr_image.paste(logo_image, logo_position)
+    # Create a mask for the logo image with transparency
+    logo_mask = logo_image.convert("RGBA")
+    logo_mask_data = logo_mask.getdata()
+    transparent_mask_data = []
+    for item in logo_mask_data:
+        # Set pixels with white background to fully transparent
+        if item[:3] == (255, 255, 255):
+            transparent_mask_data.append((255, 255, 255, 0))
+        else:
+            transparent_mask_data.append(item)
+
+    logo_mask.putdata(transparent_mask_data)
+
+    # Paste the logo image onto the QR code with transparency
+    qr_image.paste(logo_mask, logo_position, logo_mask)
 
     return qr_image
 
