@@ -20,7 +20,7 @@
                                     </div>
                                 {% endif %}
                             {% endwith %}
-                            <form action="/register" method="post">
+                            <form id="myForm" action="/register" method="post">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <div class="form-floating mb-3 mb-md-0">
@@ -109,5 +109,31 @@
         </div>
     </main>
 </div>
+
+<script>
+    function checkFormFields() {
+  // Get all the input fields in the form
+  var inputFields = document.getElementsByTagName('input');
+
+  // Loop through each input field
+  for (var i = 0; i < inputFields.length; i++) {
+    var inputField = inputFields[i];
+
+    // Check if the input field is required and not filled
+    if (inputField.required && inputField.value.trim() === '') {
+      // Alert the user to fill in the field
+      alert('Please fill in the ' + inputField.name + ' field.');
+      // Optionally, you can focus on the field to bring user's attention to it
+      inputField.focus();
+      // Stop further processing
+      return; 
+    }
+  }
+
+  // If all fields are filled, submit the form
+  var form = document.getElementById('myForm'); // Replace 'myForm' with the ID of your form
+  form.submit();
+}
+</script>
 
 {% endblock content %}
